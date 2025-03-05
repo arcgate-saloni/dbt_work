@@ -1,0 +1,400 @@
+1. Data Transformation:
+Create DBT models to:
+a) Standardize column names and formats for consistency.
+with standardized_data as (
+    select
+        upper(trim("VIN (1-10)")) as vin,
+        upper(trim(county)) as county,
+        upper(trim(city)) as city,
+        state,
+        postalcode,
+        modelyear,
+        upper(trim(make)) as make,
+        upper(trim(model)) as model,
+        "Electric Vehicle Type",
+        "Clean Alternative Fuel Vehicle (CAFV) Eligibility",
+        "Electric Range",
+        "Base MSRP",
+        "Legislative District",
+        "DOL Vehicle ID",
+        "Vehicle Location",
+        "Electric Utility",
+        "2020 Census Tract"
+    from electric_vehicle  
+)
+select * from standardized_data;
+
+b)Filter rows where essential data (e.g., VIN, Make, Model) is missing.
+with cleaned_data as (
+    select *
+    from {{ ref('standardized_data') }}
+    where vin is not null
+      and make is not null
+      and model is not null
+)
+select * from cleaned_data
+
+c)Aggregate data by County, City, and Legislative District.
+
+with aggregated_data AS (
+    select
+        county,
+        city,
+        legislative_district,
+        count(vin) as total_vehicles,
+        count(distinct make) as unique_makes,
+        count(distinct model) as unique_models,
+        avg(electric_range) as avg_electric_range
+    from cleaned_data
+    group by county, city, legislative_district
+)
+select * from aggregated_data;
+
+d)Classify vehicles into high-range (Electric Range &gt; 200 miles) and low-range categories.
+categorized_vehicles AS (
+    select *,
+        case
+            when electric_range > 200 then 'High-Range'
+            else 'Low-Range'
+        end as range_category
+    from cleaned_data
+)
+
+select * from aggregated_data
+
+2. KPI Calculation:
+- User-Centric Metrics:
+ Count of registered vehicles by County, City, and Model Year.
+ Average Electric Range by Make and Model.
+ Average Base MSRP by Electric Vehicle Type.
+- Environmental Metrics:
+ Total Electric Range for all BEVs in a specific Legislative District.
+ Percentage of vehicles eligible for CAFV programs.
+- Market Metrics:
+ Most common Make and Model in each County.
+ Distribution of vehicles by Electric Vehicle Type (BEV vs. PHEV).
+
+
+
+
+with environmental_metrics as (
+    select legislative_district,sum(electric_range) as total_bev_range,
+      sum(case when cafv_eligibility = 'Yes' then 1 else 0 end)*100.0 / count(*) AS cafv_eligibility_percentage
+from cleaned_data
+  where electric_vehicle_type = 'BEV'
+    group by legislative_district
+),
+
+with market_metrics as (
+    select county, make, model, count(*) as model_count,
+        row_number() over (partition by county order by count(*) desc) as rank
+    from cleaned_data
+    group by county, make, model
+),
+
+with ev_distribution as (
+    select
+        electric_vehicle_type,
+        count(*) as vehicle_count,
+        count(*)*100.0 / SUM(count(*)) OVER () as percentage_distribution
+    from cleaned_data
+    group by electric_vehicle_type
+)
+
+select * from aggregated_data
+
+Section 3: Analytical Reports
+1. Electric Vehicle Distribution by Location:
+- Number of registered vehicles per County, City, and Legislative District.
+select  county,  city,  legislative_district, count(vin) as registered_vehicles
+from  electric_vehicle
+group by county, city, legislative_district;
+
+- Top 5 Counties with the highest number of EV registrations.
+select county, count(vin) as registered_vehicles
+from electric_vehicle
+group by  county
+order by  registered_vehicles desc
+limit 5;
+
+2. Market Analysis:
+- Most common Makes and Models.
+select  make,  model, count(vin) as vehicle_count
+from  electric_vehicle
+group by  make, model
+order by   vehicle_count desc;
+
+- Average Base MSRP by Make and Electric Vehicle Type.
+select make,electric_vehicle_type,avg(base_msrp) as avg_base_msrp
+from  electric_vehicle
+group by  make,electric_vehicle_type;
+
+- Percentage of BEVs vs. PHEVs in each County.
+select  county,electric_vehicle_type,count(vin) * 100.0 / (select count(*) from electric_vehicle where county = e.county) as ev_percentage
+from  electric_vehicle e
+where  electric_vehicle_type in ('bev', 'phev')
+group by  county, electric_vehicle_type;
+
+3. Environmental Impact:
+- Total Electric Range by Legislative District.
+select legislative_district, sum(electric_range) as total_electric_range
+from electric_vehicle
+group by  legislative_district;
+
+
+- Counties with the highest percentage of CAFV-eligible vehicles.
+select  county,  count(case when cafv_eligibility = 'yes' then 1 end) * 100.0 / count(vin) as cafv_percentage
+from electric_vehicle
+group by  county
+order by cafv_percentage desc;
+
+4. Historical Trends:
+- Changes in EV registrations over time (using snapshots).
+select extract(year from registration_date) as year,  count(vin) as ev_registrations
+from  electric_vehicle
+group by  extract(year from registration_date)
+order by year;
+
+- Trends in Model Year distribution for BEVs and PHEVs.
+select  model_year,  electric_vehicle_type, count(vin) as vehicle_count
+from electric_vehicle
+group by  model_year, electric_vehicle_type
+order by  model_year, electric_vehicle_type;
+
+5. Electric Range Analysis:
+- Vehicles with an Electric Range &gt; 300 miles.
+select  vin,  make,  model,  electric_range
+from  electric_vehicle
+where  electric_range > 300;
+
+- Average and median Electric Range by Make.
+
+
+Section 4: DBT-Related Questions
+1. How would you create a model to group EV registrations by County and calculate the total
+number of vehicles?
+
+select  County, count(VIN) AS total_vehicles
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+group by County
+
+2. Write a DBT model to filter vehicles with an Electric Range &gt; 300 miles.
+
+select *
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+where "Electric Range" > 300
+
+3. Create a model to calculate the average Base MSRP by Electric Vehicle Type.
+
+select  "Electric Vehicle Type",  AVG("Base MSRP") AS avg_msrp
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+group by "Electric Vehicle Type"
+
+4. How do you classify vehicles into high-range and low-range categories in a DBT model?
+
+select  VIN, "Electric Range", 
+    case 
+        when "Electric Range" > 200 then 'High Range'
+        else 'Low Range'
+    end as range_category
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+
+5.Write a schema test to ensure VIN values are unique.
+
+tests:
+  - name: unique_vin
+    description: "Ensure VIN values are unique"
+    columns:
+      - name: VIN
+        tests:
+          - unique
+
+6.How do you test that Electric Range values are positive in DBT?
+
+tests:
+  - name: positive_electric_range
+    description: "Ensure Electric Range values are positive"
+    columns:
+      - name: "Electric Range"
+        tests:
+          - not_null
+          - greater_than: 
+              value: 0
+
+
+7.Create a custom test to validate that CAFV eligibility is correctly classified for vehicles with Electric Range > 200 miles.
+
+select  * 
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+where "Electric Range" > 200 and "Clean Alternative Fuel Vehicle (CAFV) Eligibility" is null 
+
+8. How would you implement an incremental model for tracking new EV registrations?
+
+{{ config(materialized='incremental', unique_key='VIN') }}
+
+select * 
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+
+{% if is_incremental() %}
+where "DOL Vehicle ID" not in (select  "DOL Vehicle ID" from {{ ELECTRIC_VEHICLE}})
+{% endif %}
+
+
+9. What is the difference between full_refresh and incremental loads in DBT?
+
+-Full refresh: Reloads the entire dataset, dropping and recreating tables.
+-Incremental load: Processes only new or updated records, reducing compute time.
+
+10. Write a snapshot to track changes in EV registrations over time.
+
+{% snapshot ev_snapshot %}
+
+{{ config(
+    target_schema='snapshots',
+    unique_key='VIN',
+    strategy='timestamp',
+    updated_at='last_updated'
+) }}
+
+select * from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+
+{% endsnapshot %}
+
+11. How do snapshots help analyze historical trends in EV data?
+Snapshots store historical changes in EV registrations, allowing analysis of vehicle updates, ownership transfers, and fleet growth over time.
+
+12.  How would you use a macro to calculate the total Electric Range for all vehicles in a County?
+{% macro total_electric_range_by_county() %}
+select  County,  sum("Electric Range") AS total_range
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+group by  County
+{% endmacro %}
+
+13. Write a Jinja template to create a filter for EV registrations based on Model Year.
+select * 
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+where "Model Year" >= {{ var('model_year', 2020) }}
+
+14. Create a model to calculate the percentage of vehicles eligible for CAFV programs by County.
+with total as (
+    select County, count(VIN) as total_vehicles
+    from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+    group by County
+),
+eligible as (
+    select County, count(VIN) as eligible_vehicles
+    from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+    where  "Clean Alternative Fuel Vehicle (CAFV) Eligibility" = 'Eligible'
+    group by County
+)
+ select
+    total.County, 
+    (eligible.eligible_vehicles * 100.0 / total.total_vehicles) as cafv_percentage
+from total left join eligible on total.County = eligible.County
+
+15. How would you identify the top 5 cities with the highest concentration of BEVs?
+
+select City, count(VIN) AS bevs_count
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+where  "Electric Vehicle Type" = 'BEV'
+group by City
+order by bevs_count desc
+limit  5
+
+16. How do you add descriptions to columns in DBT documentation?
+models:
+  - name: electric_vehicle
+    description: "Electric vehicle dataset"
+    columns:
+      - name: VIN
+        description: "Unique vehicle identifier"
+      - name: "Electric Range"
+        description: "Total miles the vehicle can travel on electric power"
+
+17. Explain how DBT auto-generates a lineage graph for your data pipeline.
+DBT creates a DAG (Directed Acyclic Graph) by analyzing model dependencies in SQL files. Using dbt docs generate & dbt docs serve, you can visualize the data flow.
+
+18. How do you debug a failed test in DBT?
+Run dbt test -m <model_name>
+Check logs in target/run_results.json
+Use dbt debug to check configurations
+Manually run failing queries in a SQL editor
+
+19. What are the performance implications of using table vs. view materializations?
+View: Faster to build, but queries are executed at runtime (slower for large datasets).
+Table: Materialized as a physical table, improving performance for large data but requiring storage and refresh time.
+
+20. How do you optimize incremental models for large datasets?
+Partitioning & Clustering: Use partitions to limit query scope.
+Indexing: Improve lookup efficiency.
+Use is_incremental(): Ensure only new records are processed.
+Optimize joins: Pre-aggregate data before joining.
+
+
+Section 5: Hands-On Exercises
+1. Build a DBT model to calculate the total number of EV registrations by County.
+select County, COUNT(VIN) AS total_ev_registrations
+from {{ source('DBT_DT', 'ELECTRIC_VEHICLE') }}
+group by County
+
+2. Create a schema test to ensure DOL Vehicle ID values are unique.
+version: 2
+models
+  - name: ev_data
+    description: "Electric vehicle dataset"
+    columns:
+      - name: "DOL Vehicle ID"
+        tests:
+          - unique
+
+dbt test -m ev_data
+
+
+3. Implement a snapshot to track changes in the Electric Range of registered vehicles over
+time.
+{% snapshot ev_range_snapshot %}
+
+{{ config(
+    target_schema='snapshots',
+    unique_key='VIN',
+    strategy='timestamp',
+    updated_at='last_updated'
+) }}
+
+select
+    VIN, 
+    "Electric Range", 
+    last_updated
+from {{ source('DBT_DT', 'ELECTRIC_VEHICLE') }}
+
+{% endsnapshot %}
+
+dbt snapshot
+
+4. Write a macro to calculate the total Base MSRP for vehicles in a given Legislative District.
+{% macro total_msrp_by_legislative_district(district) %}
+select 
+    "Legislative District", 
+    SUM("Base MSRP") AS total_msrp
+from {{ source('DBT_DT', 'ELECTRIC_VEHICLE') }}
+where "Legislative District" = '{{ district }}'
+group by "Legislative District"
+{% endmacro %}
+
+{{ total_msrp_by_legislative_district('10') }}
+
+
+5. Use Jinja templates to dynamically filter EV data by Electric Vehicle Type and Model Year.
+select * 
+from {{ source('your_source', 'ev_data') }}
+where "Electric Vehicle Type" = '{{ var("ev_type", "BEV") }}'
+and "Model Year" >= {{ var("model_year", 2020) }}
+
+dbt run --vars '{ev_type: "PHEV", model_year: 2018}'
+#changes
+
+
+
+
+
+
