@@ -1,0 +1,12 @@
+tests:
+  - name: positive_electric_range
+    description: "Ensure Electric Range values are positive"
+    columns:
+      - name: "Electric Range"
+        tests:
+          - not_null
+          - greater_than: 
+              value: 0
+select * 
+from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+where "Electric Range" > 200 and "Clean Alternative Fuel Vehicle (CAFV) Eligibility" is null 

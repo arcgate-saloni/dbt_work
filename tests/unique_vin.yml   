@@ -1,0 +1,7 @@
+tests:
+  - name: unique_vin
+    description: "Ensure VIN values are unique"
+    columns:
+      - name: VIN
+        tests:
+          - unique
