@@ -5,3 +5,4 @@ tests:
       - name: VIN
         tests:
           - unique
+             version : 2

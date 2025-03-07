@@ -5,6 +5,6 @@
     strategy='timestamp',
     updated_at='last_updated'
 ) }}
-select VIN, "Electric Range", last_updated from {{ source('DBT_DT', 'ELECTRIC_VEHICLE') }}
+select VIN, "Electric Range", last_updated from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
 {% endsnapshot %}
 
