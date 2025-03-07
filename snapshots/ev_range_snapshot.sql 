@@ -1,10 +1,14 @@
 {% snapshot ev_range_snapshot %}
 {{ config(
-target_schema='snapshots',
-unique_key='VIN',
-strategy='timestamp',
-updated_at='last_updated'
+    target_schema='snapshots',
+    unique_key='VIN',
+    strategy='timestamp',
+    updated_at='last_updated'
 ) }}
-select VIN, "Electric Range", last_updated from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+select 
+    VIN, 
+    "Electric Range", 
+    last_updated 
+from 
+    {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
 {% endsnapshot %}
-

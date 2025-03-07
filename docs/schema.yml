@@ -1,11 +1,10 @@
-Documentation for EV dataset columns.
-
 models:
-- name: electric_vehicle
-description: "Electric vehicle dataset"
-columns:
-- name: VIN
-description: "Unique vehicle identifier"
-- name: "Electric Range"
- description: "Total miles the vehicle can travel on electric power"
+  - name: electric_vehicle
+    description: "Electric vehicle dataset"
+    columns:
+      - name: VIN
+        description: "Unique vehicle identifier"
+      - name: "Electric Range"
+        description: "Total miles the vehicle can travel on electric power"
+
 

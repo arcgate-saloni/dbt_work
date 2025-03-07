@@ -1,9 +1,9 @@
 tests:
-- name: positive_electric_range
-description: "Ensure Electric Range values are positive"
-columns:
-- name: "Electric Range"
-tests:
-- not_null
-- greater_than: 
-value: 0
+  - name: positive_electric_range
+    description: "Ensure Electric Range values are positive"
+    columns:
+      - name: "Electric Range"
+        tests:
+          - not_null
+          - greater_than: 
+              value: 0

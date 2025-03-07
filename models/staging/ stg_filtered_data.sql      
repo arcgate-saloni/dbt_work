@@ -1,7 +1,9 @@
 with cleaned_data as (
-select *
-from {{ ref('standardized_data') }}
-where vin is not null and make is not null and model is not null
+    select *
+    from {{ ref('standardized_data') }}
+    where vin is not null 
+      and make is not null 
+      and model is not null
 )
-select * from cleaned_data
-
+select * 
+from cleaned_data;

@@ -1,46 +1,44 @@
-version: 2
-
 seeds:
--name: electric_vehicle_population_data
-description: "Seed data for electric vehicle registrations, including vehicle details, location, and electric range."
-columns:
-- name: vin
-description: "Vehicle Identification Number (first 10 characters)."
-tests:
-- unique
-- not_null
-- name: county
-description: "County where the vehicle is registered."
-- name: city
-description: "City where the vehicle is registered."
-- name: state
-description: "State of vehicle registration."
-- name: postal_code
-description: "Postal code of registration."
-- name: model_year
-description: "Year of manufacture."
-- name: make
-description: "Vehicle manufacturer."
-- name: model
-description: "Vehicle model."
-- name: electric_vehicle_type
-description: "Type of electric vehicle (BEV/PHEV)."
-- name: cafv_eligibility
-description: "Clean Alternative Fuel Vehicle eligibility status."
-- name: electric_range
-description: "Electric range of the vehicle in miles."
-tests:
-- not_null
-- positive_values
-- name: base_msrp
-description: "Base Manufacturer's Suggested Retail Price."
-- name: legislative_district
-description: "Legislative district where the vehicle is registered."
-- name: dol_vehicle_id
-description: "Department of Licensing Vehicle ID."
-- name: vehicle_location
-description: "Geolocation of vehicle registration."
-- name: electric_utility
-description: "Electric utility provider for the vehicle's location."
-- name: census_tract
-description: "Census tract of vehicle registration."
+  - name: electric_vehicle_population_data
+    description: "Seed data for electric vehicle registrations, including vehicle details, location, and electric range."
+    columns:
+      - name: vin
+        description: "Vehicle Identification Number (first 10 characters)."
+        tests:
+          - unique
+          - not_null
+      - name: county
+        description: "County where the vehicle is registered."
+      - name: city
+        description: "City where the vehicle is registered."
+      - name: state
+        description: "State of vehicle registration."
+      - name: postal_code
+        description: "Postal code of registration."
+      - name: model_year
+        description: "Year of manufacture."
+      - name: make
+        description: "Vehicle manufacturer."
+      - name: model
+        description: "Vehicle model."
+      - name: electric_vehicle_type
+        description: "Type of electric vehicle (BEV/PHEV)."
+      - name: cafv_eligibility
+        description: "Clean Alternative Fuel Vehicle eligibility status."
+      - name: electric_range
+        description: "Electric range of the vehicle in miles."
+        tests:
+          - not_null
+          - positive_values
+      - name: base_msrp
+        description: "Base Manufacturer's Suggested Retail Price."
+      - name: legislative_district
+        description: "Legislative district where the vehicle is registered."
+      - name: dol_vehicle_id
+        description: "Department of Licensing Vehicle ID."
+      - name: vehicle_location
+        description: "Geolocation of vehicle registration."
+      - name: electric_utility
+        description: "Electric utility provider for the vehicle's location."
+      - name: census_tract
+        description: "Census tract of vehicle registration."
