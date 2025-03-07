@@ -1,9 +1,9 @@
 {% snapshot ev_snapshot %}
 {{ config(
-    target_schema='snapshots',
-    unique_key='VIN',
-    strategy='timestamp',
-    updated_at='last_updated'
+target_schema='snapshots',
+unique_key='VIN',
+strategy='timestamp',
+updated_at='last_updated'
 ) }}
 select * from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
 {% endsnapshot %}
