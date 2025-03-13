@@ -1,0 +1,57 @@
+name: 'ev_analysis' 
+version: '1.0.0'  
+config-version: 2  
+
+profile: 'ev_profile' 
+
+models:
+  ev_analysis:
+    materialized: table  
+
+    staging:
+      +schema: staging
+      +materialized: view  
+
+    marts:
+      +schema: marts
+      +materialized: table  
+
+    snapshots:
+      +schema: snapshots
+      +materialized: snapshot  
+
+    macros:
+      +schema: macros
+
+    tests:
+      +schema: tests
+
+seeds:
+  ev_analysis:
+    +schema: reference
+    +column_types:
+      "Electric Range": int
+      "Base MSRP": float
+      "VIN": string
+    +quote_columns: false
+
+snapshots:
+  ev_analysis:
+    +target_schema: snapshots
+    +strategy: timestamp
+    +unique_key: VIN
+    +updated_at: last_updated
+
+vars:
+  electric_vehicle_source: 'DBT_DB.ELECTRIC_VEHICLE'
+
+on-run-start:
+  - "select 'DBT project initialized' as status"
+  - "grant select on schema staging to analytics_role"
+
+on-run-end:
+  - "select 'DBT run completed successfully' as status"
+
+clean-targets:
+  - target
+  - dbt_packages

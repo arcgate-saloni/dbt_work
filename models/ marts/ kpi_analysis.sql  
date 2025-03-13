@@ -1,0 +1,39 @@
+with environmental_metrics as (
+    select 
+        legislative_district,
+        sum(electric_range) as total_bev_range,
+        sum(case when cafv_eligibility = 'Yes' then 1 else 0 end) * 100.0 / count(*) AS cafv_eligibility_percentage
+    from 
+        cleaned_data
+    where 
+        electric_vehicle_type = 'BEV'
+    group by 
+        legislative_district
+),
+
+market_metrics as (
+    select 
+        county, 
+        make, 
+        model, 
+        count(*) as model_count,
+        row_number() over (partition by county order by count(*) desc) as rank
+    from 
+        cleaned_data
+    group by 
+        county, make, model
+),
+
+ev_distribution as (
+    select
+        electric_vehicle_type,
+        count(*) as vehicle_count,
+        count(*) * 100.0 / SUM(count(*)) OVER () as percentage_distribution
+    from 
+        cleaned_data
+    group by 
+        electric_vehicle_type
+)
+select * from environmental_metrics; 
+select * from market_metrics;
+select * from ev_distribution;
