@@ -3,7 +3,7 @@
         County, 
         sum("Electric Range") AS total_range
     from 
-        {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+        {{ ref(source('DBT_DB', 'ELECTRIC_VEHICLE') )}}
     group by 
         County
 {% endmacro %}

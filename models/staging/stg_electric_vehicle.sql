@@ -8,15 +8,15 @@ with standardized_data as (
         modelyear,
         upper(trim(make)) as make,
         upper(trim(model)) as model,
-        "Electric Vehicle Type",
-        "Clean Alternative Fuel Vehicle (CAFV) Eligibility",
-        "Electric Range",
-        "Base MSRP",
-        "Legislative District",
-        "DOL Vehicle ID",
-        "Vehicle Location",
-        "Electric Utility",
-        "2020 Census Tract"
+        "Electric Vehicle Type" as electric_vehicle_type,
+        "Clean Alternative Fuel Vehicle (CAFV) Eligibility" as clean_alternative_fuel_vehicle_eligibility,
+        "Electric Range" as electric_range,
+        "Base MSRP" as base_msrp,
+        "Legislative District" as legistlative_district,
+        "DOL Vehicle ID" as dol_vehicle_id,
+        "Vehicle Location" as vehicle_location,
+        "Electric Utility" as electric_utility,
+        "2020 Census Tract" as 2020_census_tract
     from 
         electric_vehicle  
 )

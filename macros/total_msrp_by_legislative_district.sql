@@ -3,7 +3,7 @@
         "Legislative District", 
         SUM("Base MSRP") AS total_msrp
     from 
-        {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+        {{ ref(source('DBT_DB', 'ELECTRIC_VEHICLE')) }}
     where 
         "Legislative District" = '{{ district }}'
     group by 

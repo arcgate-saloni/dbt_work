@@ -10,5 +10,5 @@ select
     "Electric Range", 
     last_updated 
 from 
-    {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+    {{ ref(source('DBT_DB', 'ELECTRIC_VEHICLE') )}}
 {% endsnapshot %}

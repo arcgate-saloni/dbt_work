@@ -6,5 +6,5 @@
     updated_at='last_updated'
 ) }}
 select * 
-from {{ source('DBT_DB', 'ELECTRIC_VEHICLE') }}
+from {{ ref(source('DBT_DB', 'ELECTRIC_VEHICLE') )}}
 {% endsnapshot %}
